@@ -35,14 +35,18 @@ class FuzzyCategorize:
         self.metrics = {}
         self.bug_terms = []
         self.other_terms = []
-        self.read_datasets()
-        self.classify_datasets()
-        self.create_training_and_test_data()
-        self.process_titles()
-        self.prepare_training_frequencies()
-        self.process_test_data()
-        self.calculate_metrics()
-        self.report_datasets()
+        compares = {'CLASSIFIED': 'Manuel', 'TYPE': 'JIRA'}
+        for key, value in compares.items():
+            print(f"=========={value}==========")
+            for i in range(1, 6):
+                self.read_datasets()
+                self.classify_datasets()
+                self.create_training_and_test_data()
+                self.process_titles()
+                self.prepare_training_frequencies(key)
+                self.process_test_data(key)
+            self.calculate_metrics()
+            self.report_datasets()
 
     def read_datasets(self):
         for dataset_name, filename in self.datasets.items():
@@ -80,7 +84,7 @@ class FuzzyCategorize:
                             title) if w not in self.stop_words]
                         item.PROCESSED = title
 
-    def prepare_training_frequencies(self):
+    def prepare_training_frequencies(self, com_key):
         bugs = []
         others = []
         for _, categorized_data in self.data.items():
@@ -89,7 +93,7 @@ class FuzzyCategorize:
                     if key == 'train':
                         for item in d_array:
                             processed_title = item.PROCESSED
-                            if item.CLASSIFIED == 'BUG':
+                            if item.get(com_key) == 'BUG':
                                 bugs += processed_title
                             else:
                                 others += processed_title
@@ -103,7 +107,7 @@ class FuzzyCategorize:
             tf = others[key] / all_issues[key]
             self.frequencies['others'][key] = tf
 
-    def process_test_data(self):
+    def process_test_data(self, com_key):
         for dataset, categorized_data in self.data.items():
             for _, splitted_data in categorized_data.items():
                 for key, d_array in splitted_data.items():
@@ -118,12 +122,12 @@ class FuzzyCategorize:
                             others_score = calculate_membership_score(
                                 others_freqs)
                             if bug_score >= others_score:
-                                if item.TYPE == 'BUG':
+                                if item.get(com_key) == 'BUG':
                                     self.results[dataset]['TP'] += 1
                                 else:
                                     self.results[dataset]['FP'] += 1
                             else:
-                                if item.TYPE == 'BUG':
+                                if item.get(com_key) == 'BUG':
                                     self.results[dataset]['FN'] += 1
                                 else:
                                     self.results[dataset]['TN'] += 1
