@@ -2,7 +2,7 @@ from collections import defaultdict
 import pandas as pd
 import string
 from random import sample
-from nltk.corpus import stopwords 
+from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from collections import Counter
 
@@ -21,7 +21,7 @@ class FuzzyCategorize:
             'jackrabbit': '../datasets/final_jackrabbit.csv',
             'httpclient': '../datasets/final_httpclient.csv',
         }
-        self.stop_words = set(stopwords.words('english')) 
+        self.stop_words = set(stopwords.words('english'))
         self.data = defaultdict(dict)
         self.frequencies = {
             'bug': {},
@@ -42,8 +42,8 @@ class FuzzyCategorize:
         self.prepare_training_frequencies()
         self.process_test_data()
         self.calculate_metrics()
+        self.report_datasets()
 
-    
     def read_datasets(self):
         for dataset_name, filename in self.datasets.items():
             self.data[dataset_name] = pd.read_csv(filename)
@@ -66,16 +66,18 @@ class FuzzyCategorize:
                 test = [x for x in d_array if x.ID not in processed_ids]
                 self.data[dataset_name][d_type]['train'] = train
                 self.data[dataset_name][d_type]['test'] = test
-    
+
     def process_titles(self):
         for _, categorized_data in self.data.items():
             for _, splitted_data in categorized_data.items():
                 for _, d_array in splitted_data.items():
                     for item in d_array:
                         title = item.TITLE
-                        title = title.translate(str.maketrans("", "", string.punctuation))
+                        title = title.translate(
+                            str.maketrans("", "", string.punctuation))
                         title = title.lower()
-                        title = [w for w in word_tokenize(title) if w not in self.stop_words]
+                        title = [w for w in word_tokenize(
+                            title) if w not in self.stop_words]
                         item.PROCESSED = title
 
     def prepare_training_frequencies(self):
@@ -108,10 +110,13 @@ class FuzzyCategorize:
                     if key == 'test':
                         for item in d_array:
                             processed_title = item.PROCESSED
-                            bug_freqs = [self.frequencies['bug'].get(w, 0) for w in processed_title]
-                            others_freqs = [self.frequencies['others'].get(w, 0) for w in processed_title]
+                            bug_freqs = [self.frequencies['bug'].get(
+                                w, 0) for w in processed_title]
+                            others_freqs = [self.frequencies['others'].get(
+                                w, 0) for w in processed_title]
                             bug_score = calculate_membership_score(bug_freqs)
-                            others_score = calculate_membership_score(others_freqs)
+                            others_score = calculate_membership_score(
+                                others_freqs)
                             if bug_score >= others_score:
                                 if item.TYPE == 'BUG':
                                     self.results[dataset]['TP'] += 1
@@ -122,7 +127,7 @@ class FuzzyCategorize:
                                     self.results[dataset]['FN'] += 1
                                 else:
                                     self.results[dataset]['TN'] += 1
-        
+
     def calculate_metrics(self):
         for dataset, data in self.results.items():
             precision = data['TP'] / (data['TP'] + data['FP'])
@@ -135,7 +140,21 @@ class FuzzyCategorize:
                 'accuracy': f"{acc:.03f}",
                 'f_measure': f"{f_measure:.03f}"
             }
-        print(self.metrics)
+
+    def report_datasets(self):
+        print("Reports")
+        print("========================")
+        for dataset, data in self.results.items():
+            print(f"Dataset: {dataset}")
+            print(f"TP: {data['TP']}")
+            print(f"TN: {data['TN']}")
+            print(f"FP: {data['FP']}")
+            print(f"FN: {data['FN']}")
+            print(f"Precision: {self.metrics[dataset]['precision']}")
+            print(f"Recall: {self.metrics[dataset]['recall']}")
+            print(f"Accuracy: {self.metrics[dataset]['accuracy']}")
+            print(f"F-measure: {self.metrics[dataset]['f_measure']}")
+            print(f"========================")
 
 
 if __name__ == "__main__":
