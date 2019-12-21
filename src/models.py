@@ -4,9 +4,18 @@ from collections import Counter
 from random import sample
 
 import pandas as pd
+import numpy as np
+
+from gensim import corpora, models
+from gensim.utils import simple_preprocess
+from gensim.parsing.preprocessing import STOPWORDS
+from nltk.stem import WordNetLemmatizer, SnowballStemmer
+from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
+
+np.random.seed(2018)
 
 def calculate_membership_score(freqs):
     result = 1
@@ -14,14 +23,25 @@ def calculate_membership_score(freqs):
         result *= 1 - freq
     return 1 - result
 
+def lemmatize_stemming(text):
+    return PorterStemmer().stem(WordNetLemmatizer().lemmatize(text, pos='v'))
+
+def preprocess_description(text):
+    result = []
+    for token in simple_preprocess(text):
+        if token not in STOPWORDS and len(token) > 3:
+            result.append(lemmatize_stemming(str(token)))
+    return result
+
 
 class Dataset:
     STOP_WORDS = set(stopwords.words('english'))
 
-    def __init__(self, source_file, name, used_item_key):
+    def __init__(self, source_file, name, used_item_key, used_field):
         self.source_file = source_file
         self.name = name
         self.used_item_key = used_item_key
+        self.used_field = used_field
         self.bugs = []
         self.others = []
         self.training = {'bugs': [], 'others': []}
@@ -34,6 +54,7 @@ class Dataset:
 
     def read_data_from_file(self):
         self.data = pd.read_csv(self.source_file)
+        self.data.DESCRIPTION = self.data.DESCRIPTION.fillna('').astype(str)
 
     def classify_dataset(self):
         for _, row in self.data.iterrows():
@@ -63,6 +84,27 @@ class Dataset:
                 issue.PROCESSED = title
                 self.vocabulary[issue_type] += title
 
+    def generate_corpus(self, descs):
+        dictionary = corpora.Dictionary(descs)
+        dictionary.filter_extremes(no_below=15, no_above=0.5, keep_n=100000)
+        self.bow_corpus = [dictionary.doc2bow(doc) for doc in descs]
+        self.lda_model = models.LdaMulticore(
+            self.bow_corpus, id2word=dictionary, passes=5, workers=4)
+
+    def process_descriptions(self, field_name):
+        data = getattr(self, field_name)
+        for issue_type, issues in data.items():
+            descs = [preprocess_description(issue.DESCRIPTION) for issue in issues]
+            self.generate_corpus(descs)
+            for index, issue in enumerate(issues):
+                sorted_scores = sorted(self.lda_model[self.bow_corpus[index]], key=lambda tup: -1*tup[1])
+                words = []
+                if sorted_scores:
+                    index = sorted_scores[0][0]
+                    words = [w[0] for w in self.lda_model.show_topic(index, 10)]
+                issue.PROCESSED = words
+                self.vocabulary[issue_type] += words
+
     def prepare_training_frequencies(self):
         bugs = Counter(self.vocabulary['bugs'])
         others = Counter(self.vocabulary['others'])
@@ -77,11 +119,11 @@ class Dataset:
     def process_test_data(self):
         for _, issues in self.test.items():
             for issue in issues:
-                processed_title = issue.PROCESSED
+                processed_item = issue.PROCESSED
                 bug_freqs = [self.frequencies['bugs'].get(
-                    w, 0) for w in processed_title]
+                    w, 0) for w in processed_item]
                 others_freqs = [self.frequencies['others'].get(
-                    w, 0) for w in processed_title]
+                    w, 0) for w in processed_item]
                 bug_score = calculate_membership_score(bug_freqs)
                 others_score = calculate_membership_score(
                     others_freqs)
@@ -141,8 +183,12 @@ class Dataset:
         self.classify_dataset()
         self.split_data('bugs')
         self.split_data('others')
-        self.process_titles('training')
-        self.process_titles('test')
+        if self.used_field == 'titles':
+            self.process_titles('training')
+            self.process_titles('test')
+        else:
+            self.process_descriptions('training')
+            self.process_descriptions('test')
         self.prepare_training_frequencies()
         self.process_test_data()
         self.clean_fields()
