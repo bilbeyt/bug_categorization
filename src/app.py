@@ -32,6 +32,7 @@ class FuzzyCategorize:
                     dataset.report()
                     print(f"========================")
 
+
 if __name__ == "__main__":
     categorizer = FuzzyCategorize()
     categorizer.run()

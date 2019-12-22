@@ -9,7 +9,7 @@ import numpy as np
 from gensim import corpora, models
 from gensim.utils import simple_preprocess
 from gensim.parsing.preprocessing import STOPWORDS
-from nltk.stem import WordNetLemmatizer, SnowballStemmer
+from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -17,14 +17,17 @@ from nltk.tokenize import word_tokenize
 
 np.random.seed(2018)
 
+
 def calculate_membership_score(freqs):
     result = 1
     for freq in freqs:
         result *= 1 - freq
     return 1 - result
 
+
 def lemmatize_stemming(text):
     return PorterStemmer().stem(WordNetLemmatizer().lemmatize(text, pos='v'))
+
 
 def preprocess_description(text):
     result = []
@@ -48,8 +51,11 @@ class Dataset:
         self.test = {'bugs': [], 'others': []}
         self.vocabulary = {'bugs': [], 'others': []}
         self.confusion_matrix = {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0}
-        self.metrics = {'accuracy': 0, 'f_measure': 0, 'recall': 0, 'precision': 0}
+        self.metrics = {
+            'accuracy': 0, 'f_measure': 0, 'recall': 0, 'precision': 0}
         self.frequencies = {'bugs': {}, 'others': {}}
+        self.bow_corpus = None
+        self.lda_model = None
         self.read_data_from_file()
 
     def read_data_from_file(self):
@@ -65,7 +71,7 @@ class Dataset:
 
     def split_data(self, key):
         data = getattr(self, key)
-        train = sample(data, int(len(data)*0.8))
+        train = sample(data, int(len(data) * 0.8))
         processed_ids = [x.ID for x in train]
         test = [x for x in data if x.ID not in processed_ids]
         self.training[key] = train
@@ -94,14 +100,18 @@ class Dataset:
     def process_descriptions(self, field_name):
         data = getattr(self, field_name)
         for issue_type, issues in data.items():
-            descs = [preprocess_description(issue.DESCRIPTION) for issue in issues]
+            descs = [
+                preprocess_description(issue.DESCRIPTION) for issue in issues]
             self.generate_corpus(descs)
             for index, issue in enumerate(issues):
-                sorted_scores = sorted(self.lda_model[self.bow_corpus[index]], key=lambda tup: -1*tup[1])
+                sorted_scores = sorted(
+                    self.lda_model[self.bow_corpus[index]],
+                    key=lambda tup: -1 * tup[1])
                 words = []
                 if sorted_scores:
                     index = sorted_scores[0][0]
-                    words = [w[0] for w in self.lda_model.show_topic(index, 10)]
+                    words = [
+                        w[0] for w in self.lda_model.show_topic(index, 10)]
                 issue.PROCESSED = words
                 self.vocabulary[issue_type] += words
 
