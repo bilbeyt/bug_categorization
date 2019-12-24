@@ -1,7 +1,7 @@
-from models import Dataset
+from models import LDADataset, FuzzyDataset
 
 
-class FuzzyCategorize:
+class DatasetCategorizer:
     def __init__(self):
         self.dataset_infos = {
             'lucene': '../datasets/final_lucene.csv',
@@ -15,7 +15,10 @@ class FuzzyCategorize:
 
     def initialize_datasets(self, used_key, used_field):
         for d_name, d_source_file in self.dataset_infos.items():
-            dataset = Dataset(d_source_file, d_name, used_key, used_field)
+            if used_field == 'titles':
+                dataset = FuzzyDataset(d_source_file, d_name, used_key)
+            else:
+                dataset = LDADataset(d_source_file, d_name, used_key)
             self.datasets.append(dataset)
 
     def run(self):
@@ -26,7 +29,10 @@ class FuzzyCategorize:
                 self.initialize_datasets(key, used_field)
                 print(f"=========={value}==========")
                 for dataset in self.datasets:
-                    for _ in range(self.batch):
+                    if used_field == 'titles':
+                        for _ in range(self.batch):
+                            dataset.run()
+                    else:
                         dataset.run()
                     dataset.calculate_metrics()
                     dataset.report()
@@ -34,5 +40,5 @@ class FuzzyCategorize:
 
 
 if __name__ == "__main__":
-    categorizer = FuzzyCategorize()
+    categorizer = DatasetCategorizer()
     categorizer.run()
