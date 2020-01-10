@@ -1,0 +1,126 @@
+==========titles==========
+==========Manuel==========
+Dataset: lucene
+TP: 652
+TN: 1748
+FP: 2
+FN: 48
+Precision: 0.997
+Recall: 0.931
+Accuracy: 0.980
+F-measure: 0.963
+========================
+Dataset: jackrabbit
+TP: 903
+TN: 1459
+FP: 6
+FN: 37
+Precision: 0.993
+Recall: 0.961
+Accuracy: 0.982
+F-measure: 0.977
+========================
+Dataset: httpclient
+TP: 303
+TN: 436
+FP: 9
+FN: 2
+Precision: 0.971
+Recall: 0.993
+Accuracy: 0.985
+F-measure: 0.982
+========================
+==========JIRA==========
+Dataset: lucene
+TP: 991
+TN: 1394
+FP: 16
+FN: 49
+Precision: 0.984
+Recall: 0.953
+Accuracy: 0.973
+F-measure: 0.968
+========================
+Dataset: jackrabbit
+TP: 1205
+TN: 1135
+FP: 55
+FN: 10
+Precision: 0.956
+Recall: 0.992
+Accuracy: 0.973
+F-measure: 0.974
+========================
+Dataset: httpclient
+TP: 464
+TN: 268
+FP: 12
+FN: 6
+Precision: 0.975
+Recall: 0.987
+Accuracy: 0.976
+F-measure: 0.981
+========================
+==========descriptions==========
+==========Manuel==========
+Dataset: lucene
+TP: 332
+TN: 28
+FP: 72
+FN: 57
+Precision: 0.822
+Recall: 0.853
+Accuracy: 0.736
+F-measure: 0.837
+========================
+Dataset: jackrabbit
+TP: 228
+TN: 68
+FP: 111
+FN: 74
+Precision: 0.673
+Recall: 0.755
+Accuracy: 0.615
+F-measure: 0.711
+========================
+Dataset: httpclient
+TP: 56
+TN: 25
+FP: 38
+FN: 31
+Precision: 0.596
+Recall: 0.644
+Accuracy: 0.540
+F-measure: 0.619
+========================
+==========JIRA==========
+Dataset: lucene
+TP: 223
+TN: 67
+FP: 87
+FN: 112
+Precision: 0.719
+Recall: 0.666
+Accuracy: 0.593
+F-measure: 0.691
+========================
+Dataset: jackrabbit
+TP: 154
+TN: 93
+FP: 103
+FN: 131
+Precision: 0.599
+Recall: 0.540
+Accuracy: 0.514
+F-measure: 0.568
+========================
+Dataset: httpclient
+TP: 25
+TN: 40
+FP: 16
+FN: 69
+Precision: 0.610
+Recall: 0.266
+Accuracy: 0.433
+F-measure: 0.370
+========================

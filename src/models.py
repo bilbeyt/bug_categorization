@@ -180,28 +180,35 @@ class LDADataset(Dataset):
         dictionary.filter_extremes(no_below=15, no_above=0.5, keep_n=100000)
         self.bow_corpus = [dictionary.doc2bow(desc) for desc in descs]
         self.lda_model = models.LdaMulticore(
-            self.bow_corpus, id2word=dictionary, passes=5, workers=4, num_topics=len(descs))
+            self.bow_corpus, id2word=dictionary, passes=5,
+            workers=4, num_topics=10, minimum_probability=0.0)
 
     def process_descriptions(self, field_name):
         data = getattr(self, field_name)
         descs = []
-        words_table = []
+        data_table = []
         for issue in data:
             desc = issue.DESCRIPTION
             processed = preprocess_description(desc)
             descs.append(processed)
         self.generate_corpus(descs)
-        for i in range(len(self.bow_corpus)):
-            words = [x[0] for x in self.lda_model.show_topic(i)] + [field_name]
-            words_table.append(words)
-        self.model_data += words_table
+        for desc in self.bow_corpus:
+            # if desc:
+            row = []
+            for index, score in sorted(self.lda_model[desc], key=lambda tup: -1*tup[1]):
+                row.append(score)
+            if field_name == 'bugs':
+                row.append(1)
+            else:
+                row.append(0)
+            data_table.append(row)
+        self.model_data += data_table
 
     def create_model(self):
-        onehotencoder = OneHotEncoder()
-        self.model_data = onehotencoder.fit_transform(self.model_data).toarray()
+        self.model_data = pd.DataFrame.from_records(self.model_data)
         clf = RandomForestClassifier(n_estimators=100)
-        x = self.model_data[:,:-1]
-        y = self.model_data[:,-1]
+        x = self.model_data.iloc[:,:-1]
+        y = self.model_data.iloc[:,-1]
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
         clf.fit(x_train, y_train)
         y_pred = clf.predict(x_test)
