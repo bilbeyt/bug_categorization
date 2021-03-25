@@ -43,7 +43,7 @@ pylint-plugin-utils==0.6
 python-dateutil==2.8.1
 python-utils==2.3.0
 pytz==2019.3
-PyYAML==5.2
+PyYAML==5.4
 requests==2.22.0
 requirements-detector==0.6
 s3transfer==0.2.1
