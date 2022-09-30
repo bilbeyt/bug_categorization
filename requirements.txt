@@ -17,7 +17,7 @@ ipython-genutils==0.2.0
 isort==4.3.21
 jedi==0.15.2
 jmespath==0.9.4
-joblib==0.14.1
+joblib==1.2.0
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
 nltk==3.4.5
